@@ -1,0 +1,167 @@
+:root {
+  --box-width: 42vw;
+
+  --bg-color: rgba(8, 15, 27, 0.78);
+  --border-color: rgba(125, 211, 252, 0.55);
+  --text-color: #ffffff;
+  --subtext-color: rgba(255, 255, 255, 0.86);
+  --accent-color: #7dd3fc;
+  --bar-bg: rgba(255, 255, 255, 0.18);
+
+  --radius: 1.2vw;
+}
+
+/* 基本設定 */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+
+  color: var(--text-color);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* ウィジェット本体 */
+
+.widget {
+  position: absolute;
+  width: var(--box-width);
+  max-width: 92vw;
+  box-sizing: border-box;
+
+  padding: 2vh 2vw;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-color);
+
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* 表示位置 */
+
+.pos-top-left .widget {
+  top: 7vh;
+  left: 4vw;
+}
+
+.pos-top-right .widget {
+  top: 7vh;
+  right: 4vw;
+}
+
+.pos-bottom-left .widget {
+  bottom: 7vh;
+  left: 4vw;
+}
+
+.pos-bottom-right .widget {
+  right: 4vw;
+  bottom: 7vh;
+}
+
+/* 表示サイズ */
+
+.size-small {
+  --box-width: 34vw;
+}
+
+.size-medium {
+  --box-width: 42vw;
+}
+
+.size-large {
+  --box-width: 50vw;
+}
+
+/* 同一デザイン内のカラープリセット */
+
+.theme-sharp-blue {
+  --bg-color: rgba(8, 15, 27, 0.78);
+  --border-color: rgba(125, 211, 252, 0.55);
+  --accent-color: #7dd3fc;
+}
+
+.theme-sharp-purple {
+  --bg-color: rgba(22, 13, 36, 0.8);
+  --border-color: rgba(196, 181, 253, 0.58);
+  --accent-color: #c4b5fd;
+}
+
+.theme-sharp-red {
+  --bg-color: rgba(36, 10, 14, 0.8);
+  --border-color: rgba(251, 113, 133, 0.58);
+  --accent-color: #fb7185;
+}
+
+/* テキスト */
+
+.label {
+  color: var(--subtext-color);
+  font-size: clamp(20px, 1.6vw, 30px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.main-value {
+  display: flex;
+  gap: 0.8vw;
+  align-items: baseline;
+  margin-top: 0.8vh;
+}
+
+.current {
+  color: var(--accent-color);
+  font-size: clamp(44px, 4.8vw, 86px);
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.goal {
+  color: var(--subtext-color);
+  font-size: clamp(22px, 2vw, 34px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.message {
+  margin-top: 1vh;
+  color: var(--subtext-color);
+  font-size: clamp(18px, 1.4vw, 26px);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* 進捗バー */
+
+.bar {
+  width: 100%;
+  height: clamp(14px, 1.4vw, 24px);
+  margin-top: 1.6vh;
+  overflow: hidden;
+
+  border-radius: 999px;
+  background: var(--bar-bg);
+}
+
+.bar-fill {
+  width: 0%;
+  height: 100%;
+
+  border-radius: 999px;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}

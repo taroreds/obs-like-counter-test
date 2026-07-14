@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Like Goal Test</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <main class="widget">
+    <div class="label" id="label"></div>
+
+    <div class="main-value">
+      <div class="current" id="current"></div>
+      <div class="goal" id="goal"></div>
+    </div>
+
+    <div class="bar" aria-hidden="true">
+      <div class="bar-fill" id="barFill"></div>
+    </div>
+
+    <div class="message" id="message"></div>
+  </main>
+
+  <!-- 順序が重要：設定を先に読み、その後で描画処理を実行する -->
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
