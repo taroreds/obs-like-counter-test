@@ -23,10 +23,12 @@
     <div class="message" id="message"></div>
   </main>
 
-  <!-- 順序が重要：設定、状態管理、描画、初期化の順に読み込む -->
+  <!-- 順序が重要：設定、状態、描画、初期化、通信、入力の順に読み込む -->
   <script src="./config.js"></script>
   <script src="./state.js"></script>
   <script src="./render.js"></script>
   <script src="./app.js"></script>
+  <script src="./transport.js"></script>
+  <script src="./input-channel.js"></script>
 </body>
 </html>

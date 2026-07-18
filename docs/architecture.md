@@ -72,3 +72,37 @@ window.LIKE_GOAL.subscribe((state) => {
 `app.js` は起動時に検証済みのテーマ、配置、サイズのCSSクラスを `body` へ適用します。これらの外観設定は実行時状態に含めません。
 
 `render.js` は状態を受け取り、既存のDOM IDへ `textContent` で描画します。進捗率は `current / goal` から計算し、表示用の幅を0～100%に制限します。
+
+## 7. BroadcastChannelによる操作パネル通信
+
+技術スパイクで、OBSのBrowser Sourceとカスタムブラウザドックの両方を同じ配布フォルダ内のfile URLとして読み込んだ場合に、BroadcastChannelの双方向通信が成立することを確認しました。
+
+表示側は、OBSの「ローカルファイル」を使わず、URL欄に `file:///.../index.html` を指定します。controllerもカスタムブラウザドックのURL欄に `file:///.../controller.html` を指定します。
+
+```text
+controller.html
+  ↓ action / sync-request
+transport.js
+  ↓ BroadcastChannel: obs-like-goal-widget-v1
+transport.js
+  ↓
+input-channel.js
+  ↓
+window.LIKE_GOAL.dispatch()
+  ↓
+state.js → render.js
+  ↓ state
+controller.html
+```
+
+`transport.js` はBroadcastChannelの生成、送受信、購読、終了だけを担当します。通信メッセージの意味やDOM操作は持ちません。
+
+`input-channel.js` は表示ページ専用の入力アダプターです。検証済みの通信アクションだけを公開APIの `window.LIKE_GOAL.dispatch()` へ渡します。状態変更は既存の購読機構で検知し、最新stateをcontrollerへ送信します。
+
+controllerは受信したstateを表示するだけであり、実行時状態の正本ではありません。controller起動時は `sync-request` を送信し、表示側は最新stateを返信します。表示側も起動時に初期stateを一度送信します。
+
+controllerの状態は、BroadcastChannelを利用できない `未接続`、state受信待ちの `同期待機`、有効stateを受信済みの `同期済み` です。同期済みは表示ページが現在も存在することを保証しないため、最終同期時刻と再同期ボタンを表示します。heartbeatや切断検知は実装しません。
+
+controllerの再読み込み時は再同期要求を送ります。Browser Sourceの再読み込み時は永続化しないため状態が初期設定へ戻り、起動時state送信でcontrollerを更新します。
+
+正式対応する構成は表示ページ1つ、controller1つです。複数の表示ページは同じアクションを受け取って状態競合を起こし得るため、今回の実装では対応しません。
