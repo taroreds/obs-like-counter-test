@@ -103,6 +103,26 @@ controllerは受信したstateを表示するだけであり、実行時状態�
 
 controllerの状態は、BroadcastChannelを利用できない `未接続`、state受信待ちの `同期待機`、有効stateを受信済みの `同期済み` です。同期済みは表示ページが現在も存在することを保証しないため、最終同期時刻と再同期ボタンを表示します。heartbeatや切断検知は実装しません。
 
-controllerの再読み込み時は再同期要求を送ります。Browser Sourceの再読み込み時は永続化しないため状態が初期設定へ戻り、起動時state送信でcontrollerを更新します。
+controllerの再読み込み時は再同期要求を送ります。Browser Sourceの再読み込み時は、保存値が有効ならcurrentとgoalを復元してから起動時state送信でcontrollerを更新します。
 
 正式対応する構成は表示ページ1つ、controller1つです。複数の表示ページは同じアクションを受け取って状態競合を起こし得るため、今回の実装では対応しません。
+
+## 8. 実行時状態の永続化
+
+`persistence.js` はlocalStorageを使い、currentとgoalだけを保存します。DOM、BroadcastChannel、state.jsの内部状態には触れません。保存形式は次のとおりです。
+
+```json
+{
+  "version": 1,
+  "current": 42,
+  "goal": 100
+}
+```
+
+保存キーは `obs-like-goal-widget-state-v1:<encodeURIComponent(location.pathname)>` の形式です。同じindex.htmlのパスでは同じ保存データを使い、別フォルダへの移動またはコピーは別の保存領域として扱います。
+
+起動時はconfigからストアを生成した後、初期描画・render購読・永続化購読の前に保存値を読み込みます。有効な保存値は既存の `set-current` と `set-goal` アクションで復元します。保存データがない初回起動時は自動保存しません。
+
+通常の状態変更後は永続化購読がcurrentとgoalを保存します。`reset-counter`後はcurrent 0と現在のgoalを保存します。`reset-all`時は保存を一時的に抑止し、状態変化の有無にかかわらず保存キーを削除します。次の通常状態変更から保存を再開します。
+
+localStorageの取得、読み書き、削除、JSON処理の例外は捕捉してconsoleへ記録します。利用不能または不正な保存データの場合はconfigの初期値で継続し、表示とBroadcastChannel通信を停止しません。
