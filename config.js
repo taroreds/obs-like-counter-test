@@ -1,8 +1,8 @@
 window.LIKE_GOAL_CONFIG = {
   content: {
     label: "高評価ゴール",
-    current: 42,
-    goal: 100,
+    current: 60,
+    goal: 300,
     message: "高評価で応援お願いします！"
   },
 
