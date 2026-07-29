@@ -8,19 +8,45 @@
 
 ## 2. 実行フロー
 
-ローカルファイルとして、次の順序で同期的に読み込みます。
+`index.html` は、ローカルファイルとして次の順序で同期的に読み込みます。順序には依存関係があります。
 
 ```text
-config.js
+config.js        設定の定義
     ↓
-state.js
+state.js         createStateStore を internal へ登録
     ↓
-render.js
+render.js        renderWidget を internal へ登録
     ↓
-app.js
+persistence.js   createStatePersistence を internal へ登録
     ↓
-初期描画と状態変更時の再描画
+app.js           初期化を実行
+    ↓
+transport.js     createChannelTransport を internal へ登録
+    ↓
+input-channel.js 通信を初期化
 ```
+
+`app.js` の内部処理は次の順序です。
+
+```text
+configからstoreを生成
+    ↓
+保存値をload
+    ↓
+有効な保存値があれば set-current / set-goal で復元
+    ↓
+外観クラスをbodyへ適用
+    ↓
+公開APIを window.LIKE_GOAL へ設定
+    ↓
+初期描画
+    ↓
+render購読を登録
+    ↓
+永続化購読を登録
+```
+
+保存値の復元は、初期描画・render購読・永続化購読・BroadcastChannelの初期state送信より前に行います。復元時のdispatchが永続化購読より先に実行されるため、復元自体が保存を発生させることはありません。
 
 `config.js` が存在しない、または設定名前空間を定義しない場合でも、`app.js` は既定値を使って起動します。`config.js` 自体の構文エラーはブラウザのコンソールに記録されますが、後続スクリプトが読み込まれる環境では同様に既定値での起動を試みます。
 
@@ -28,12 +54,18 @@ app.js
 
 | ファイル | 責務 |
 | --- | --- |
-| `index.html` | DOM構造とCSS・JavaScriptの読み込み順を定義する。 |
+| `index.html` | 表示ページのDOM構造と、CSS・JavaScriptの読み込み順を定義する。 |
 | `style.css` | テーマ、配置、サイズ、表示デザインを定義する。 |
 | `config.js` | 利用者が編集する起動時設定を定義する。 |
 | `state.js` | 実行時状態の生成、検証、変更、購読通知を担当する。 |
 | `render.js` | 状態スナップショットをDOMへ描画する。 |
-| `app.js` | 設定と外観を初期化し、状態管理と描画を接続する。 |
+| `persistence.js` | localStorageへの `current` と `goal` の保存、読み込み、削除、保存値の検証を担当する。 |
+| `app.js` | 設定と外観を初期化し、状態管理・描画・永続化を接続する。公開APIを設定する。 |
+| `transport.js` | BroadcastChannelの生成、送受信、購読、終了を担当する。プロトコルとDOMは扱わない。 |
+| `input-channel.js` | 表示ページ側の通信アダプター。受信actionを検証して公開APIへ渡し、状態変更時に最新stateを送信する。 |
+| `controller.html` | 操作パネルのDOM構造と、CSS・JavaScriptの読み込み順を定義する。 |
+| `controller.css` | 操作パネルの表示デザインを定義する。 |
+| `controller.js` | 操作入力を通信メッセージへ変換し、受信stateを表示する。状態の正本を持たない。 |
 
 ## 4. 状態管理
 
