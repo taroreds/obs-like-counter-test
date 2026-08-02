@@ -42,12 +42,46 @@ file URLのオリジン扱いは実行環境によって異なるため、通常
 
 ## 6. OBS Browser Sourceへの登録手順
 
+Browser Sourceには2つの登録方法があり、`docs/decisions.md` D-011 によれば通信結果が異なる。この節では両方を登録し、それぞれの `location.origin` を記録する。
+
+登録方法の違いが通信結果に影響する理由は、まだ確認されていない。両構成の `location.origin` が異なるかどうかが、原因を判定する材料になる。
+
+### 構成A：「ローカルファイル」を有効にする
+
 1. OBSで検証用シーンを開きます。
-2. ブラウザソースを追加します。
-3. 「ローカルファイル」を有効にします。
-4. `spikes/broadcast-channel/source.html` を指定します。
+2. ブラウザソースを追加します。名前は `spike-A` などとし、構成Bと区別できるようにします。
+3. 「ローカルファイル」のチェックを**入れます**。
+4. 「参照」から `spikes/broadcast-channel/source.html` を選択します。
 5. 幅1920、高さ1080を指定します。
-6. 画面左上に診断パネルが表示されることを確認します。
+6. 画面に診断パネルが表示されることを確認します。
+7. パネルの `location.href`、`location.origin`、`location.protocol` を §10 の記録欄へ転記します。
+
+### 構成B：「ローカルファイル」を無効にし、URL欄へfile URLを入力する
+
+1. 同じシーンにもう1つブラウザソースを追加します。名前は `spike-B` などとします。
+2. 「ローカルファイル」のチェックを**外します**。
+3. URL欄へ `source.html` のfile URLを入力します。Windowsの例：`file:///C:/path/to/spikes/broadcast-channel/source.html`
+4. 幅1920、高さ1080を指定します。
+5. 画面に診断パネルが表示されることを確認します。
+6. パネルの `location.href`、`location.origin`、`location.protocol` を §10 の記録欄へ転記します。
+
+### 値の読み取りとボタン操作
+
+診断パネルの `location.href` は長いfile URLです。プレビューの縮小表示では読み取れません。
+
+ソースを右クリックして「インタラクト」を選ぶと、等倍のウィンドウが開きます。値を読み取れるほか、「PINGを送信」ボタンも押せます。
+
+Browser Sourceで値を確認するときは、常にインタラクトを使ってください。
+
+インタラクトウィンドウでは値の選択・コピーができない場合があります。その際は手入力するか、スクリーンショットを撮ってください。
+
+### 注意
+
+構成Aと構成Bを同時に表示すると、2つのsourceが同じチャンネルに参加します。dockからのPINGに両方が応答するため、送受信件数が想定と異なります。
+
+通信試験を行う際は、一方のソースだけを表示状態にしてください。表示状態の切り替えには、シーン内でのソースの表示・非表示（目のアイコン）を使います。
+
+`location.origin` の記録だけであれば、両方を同時に表示しても構いません。
 
 ## 7. OBSカスタムブラウザドックへの登録手順
 
@@ -55,6 +89,9 @@ file URLのオリジン扱いは実行環境によって異なるため、通常
 2. 任意のドック名を入力します。例：`BroadcastChannel 診断`。
 3. URL欄に `dock.html` のfile URLを入力します。Windowsの例：`file:///C:/path/to/spikes/broadcast-channel/dock.html`
 4. ドックを表示し、診断情報と「PINGを送信」ボタンが表示されることを確認します。
+5. 診断パネルの `location.href`、`location.origin`、`location.protocol` を §10 の記録欄へ転記します。
+
+ドックの登録方法は1つだけです。Browser Sourceのような「ローカルファイル」の選択肢はありません。
 
 ## 8. 成功判定
 
@@ -78,18 +115,61 @@ file URLのオリジン扱いは実行環境によって異なるため、通常
 
 ## 10. 結果記録欄
 
+実機で確認した内容だけを記入してください。未実施の欄は空欄のまま残します。
+
+### 共通
+
 | 項目 | 記録 |
 | --- | --- |
-| 実施日 | |
-| OBSバージョン | |
-| OS | |
-| Browser Sourceのhref | |
-| Browser Sourceのorigin | |
-| Dockのhref | |
-| Dockのorigin | |
-| sourceからdockへの通信結果 | |
-| dockからsourceへの通信結果 | |
-| 再読み込み後の結果 | |
-| OBS再起動後の結果 | |
-| 判定 | 成功／失敗／保留 |
-| 備考 | |
+| 実施日 | 2026-08-02 |
+| OBSバージョン | 32.2.2.1 |
+| OS | Windows 11 25H2 |
+| 通常ブラウザ名とバージョン | |
+
+### 通常ブラウザ（file URL）
+
+| 項目 | 記録 |
+| --- | --- |
+| source.html の href | `file:///C:/.../spikes/broadcast-channel/source.html` |
+| source.html の origin | `file://` |
+| dock.html の href | `file:///C:/.../spikes/broadcast-channel/dock.html` |
+| dock.html の origin | `file://` |
+| source → dock | 成功 |
+| dock → source | 成功 |
+
+### OBS 構成A（「ローカルファイル」を有効）
+
+| 項目 | 記録 |
+| --- | --- |
+| Browser Sourceの href | `http://absolute/C:/...` |
+| Browser Sourceの origin | `http://absolute` |
+| Browser Sourceの protocol | `http:` |
+| dockの href | `file:///C:/.../spikes/broadcast-channel/dock.html` |
+| dockの origin | `file://` |
+| source → dock | 失敗 |
+| dock → source | 失敗 |
+
+### OBS 構成B（「ローカルファイル」を無効、URL欄へfile URL）
+
+| 項目 | 記録 |
+| --- | --- |
+| Browser Sourceの href | `file:///C:/.../spikes/broadcast-channel/source.html` |
+| Browser Sourceの origin | `file://` |
+| Browser Sourceの protocol | `file:` |
+| dockの href | `file:///C:/.../spikes/broadcast-channel/dock.html` |
+| dockの origin | `file://` |
+| source → dock | 成功 |
+| dock → source | 成功 |
+| 再読み込み後の結果 | 成功 |
+| OBS再起動後の結果 | 成功。origin にも変化なし |
+
+### 判定
+
+| 項目 | 記録 |
+| --- | --- |
+| 構成Aと構成Bで origin は一致したか | 不一致 |
+| 通信可否の違いを origin の差で説明できるか | 説明できる |
+| 総合判定 | 成功 |
+| 備考 | Browser Source の `navigator.userAgent` は構成A・Bとも `OBS/32.2.2.1` を含む。構成Aではチャンネル生成もPING送信も成功し、例外もエラーも発生しないまま届かない。 |
+
+`navigator.userAgent` は行が長いため、必要に応じて備考欄へ記入してください。
