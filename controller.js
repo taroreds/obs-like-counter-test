@@ -1,11 +1,11 @@
 (() => {
   "use strict";
 
-  const CHANNEL_NAME = "obs-like-goal-widget-v1";
   const MAX_VALUE = Number.MAX_SAFE_INTEGER;
   let syncState = "waiting";
   let lastReceivedState = null;
   let transport = null;
+  let protocol = null;
   let unsubscribeTransport = () => {};
 
   const elements = {
@@ -54,7 +54,7 @@
   function isValidStateMessage(message) {
     return isObject(message) &&
       Object.prototype.hasOwnProperty.call(message, "kind") &&
-      message.kind === "state" &&
+      message.kind === protocol.kinds.state &&
       Object.prototype.hasOwnProperty.call(message, "state") &&
       isValidState(message.state);
   }
@@ -122,6 +122,15 @@
     return true;
   }
 
+  function sendAction(action, successMessage) {
+    if (!protocol) {
+      setResult("通信機能を初期化できていないため操作できません。");
+      return false;
+    }
+
+    return sendMessage({ kind: protocol.kinds.action, action }, successMessage);
+  }
+
   function requestSync() {
     if (!transport || !transport.available) {
       setSyncState("unavailable");
@@ -131,7 +140,7 @@
 
     setSyncState("waiting");
 
-    if (!transport.post({ kind: "sync-request" })) {
+    if (!transport.post({ kind: protocol.kinds.syncRequest })) {
       setSyncState("unavailable");
       setResult("再同期要求の送信に失敗しました。");
       return;
@@ -167,13 +176,15 @@
     const application = window.LIKE_GOAL;
 
     if (!application || !application.internal ||
+      !application.internal.protocol ||
       typeof application.internal.createChannelTransport !== "function") {
       setSyncState("unavailable");
       setResult("通信機能を初期化できませんでした。");
       return;
     }
 
-    transport = application.internal.createChannelTransport(CHANNEL_NAME);
+    protocol = application.internal.protocol;
+    transport = application.internal.createChannelTransport(protocol.channelName);
     unsubscribeTransport = transport.subscribe((message) => {
       if (isValidStateMessage(message)) {
         showState(message.state);
@@ -191,12 +202,9 @@
 
   elements.adjustButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      sendMessage({
-        kind: "action",
-        action: {
-          type: button.dataset.action,
-          amount: Number(button.dataset.amount)
-        }
+      sendAction({
+        type: button.dataset.action,
+        amount: Number(button.dataset.amount)
       }, "操作要求を送信しました。表示側からの状態更新を待っています。");
     });
   });
@@ -205,10 +213,7 @@
     const value = getDirectInputValue(elements.currentInput, 0, "現在値");
 
     if (value !== null) {
-      sendMessage({
-        kind: "action",
-        action: { type: "set-current", value }
-      }, "現在値の設定要求を送信しました。表示側からの状態更新を待っています。");
+      sendAction({ type: "set-current", value }, "現在値の設定要求を送信しました。表示側からの状態更新を待っています。");
     }
   });
 
@@ -216,18 +221,12 @@
     const value = getDirectInputValue(elements.goalInput, 1, "目標値");
 
     if (value !== null) {
-      sendMessage({
-        kind: "action",
-        action: { type: "set-goal", value }
-      }, "目標値の設定要求を送信しました。表示側からの状態更新を待っています。");
+      sendAction({ type: "set-goal", value }, "目標値の設定要求を送信しました。表示側からの状態更新を待っています。");
     }
   });
 
   elements.resetCounterButton.addEventListener("click", () => {
-    sendMessage({
-      kind: "action",
-      action: { type: "reset-counter" }
-    }, "カウンターリセット要求を送信しました。表示側からの状態更新を待っています。");
+    sendAction({ type: "reset-counter" }, "カウンターリセット要求を送信しました。表示側からの状態更新を待っています。");
   });
 
   elements.resetAllButton.addEventListener("click", () => {
@@ -246,10 +245,7 @@
       return;
     }
 
-    sendMessage({
-      kind: "action",
-      action: { type: "reset-all" }
-    }, "初期設定へのリセット要求を送信しました。表示側からの状態更新を待っています。");
+    sendAction({ type: "reset-all" }, "初期設定へのリセット要求を送信しました。表示側からの状態更新を待っています。");
   });
 
   elements.resyncButton.addEventListener("click", requestSync);

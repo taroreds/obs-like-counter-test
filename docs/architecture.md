@@ -21,6 +21,8 @@ persistence.js   createStatePersistence を internal へ登録
     ↓
 app.js           初期化を実行
     ↓
+protocol.js      通信プロトコル定数を internal へ登録
+    ↓
 transport.js     createChannelTransport を internal へ登録
     ↓
 input-channel.js 通信を初期化
@@ -61,6 +63,7 @@ render購読を登録
 | `render.js` | 状態スナップショットをDOMへ描画する。 |
 | `persistence.js` | localStorageへの `current` と `goal` の保存、読み込み、削除、保存値の検証を担当する。 |
 | `app.js` | 設定と外観を初期化し、状態管理・描画・永続化を接続する。公開APIを設定する。 |
+| `protocol.js` | BroadcastChannelのチャンネル名と通信メッセージの `kind` 値を定義する。 |
 | `transport.js` | BroadcastChannelの生成、送受信、購読、終了を担当する。プロトコルとDOMは扱わない。 |
 | `input-channel.js` | 表示ページ側の通信アダプター。受信actionを検証して公開APIへ渡し、状態変更時に最新stateを送信する。 |
 | `controller.html` | 操作パネルのDOM構造と、CSS・JavaScriptの読み込み順を定義する。 |
@@ -128,6 +131,9 @@ controller.html
 ```
 
 `transport.js` はBroadcastChannelの生成、送受信、購読、終了だけを担当します。通信メッセージの意味やDOM操作は持ちません。
+
+チャンネル名と `kind` 値は `protocol.js` が定義し、`input-channel.js` と `controller.js` の
+両方がそこを参照します。両者で値が食い違うと通信が成立しないため、定義を1箇所に限定しています。
 
 `input-channel.js` は表示ページ専用の入力アダプターです。検証済みの通信アクションだけを公開APIの `window.LIKE_GOAL.dispatch()` へ渡します。状態変更は既存の購読機構で検知し、最新stateをcontrollerへ送信します。
 

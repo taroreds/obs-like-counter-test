@@ -1,7 +1,6 @@
 (() => {
   "use strict";
 
-  const CHANNEL_NAME = "obs-like-goal-widget-v1";
   const ACTION_TYPES = [
     "increment",
     "decrement",
@@ -48,13 +47,15 @@
       typeof application.dispatch !== "function" ||
       typeof application.subscribe !== "function" ||
       !application.internal ||
+      !application.internal.protocol ||
       typeof application.internal.createChannelTransport !== "function"
     ) {
       console.error("状態APIまたは通信APIを初期化できませんでした。");
       return;
     }
 
-    const transport = application.internal.createChannelTransport(CHANNEL_NAME);
+    const protocol = application.internal.protocol;
+    const transport = application.internal.createChannelTransport(protocol.channelName);
 
     if (!transport.available) {
       return;
@@ -62,7 +63,7 @@
 
     function sendCurrentState() {
       transport.post({
-        kind: "state",
+        kind: protocol.kinds.state,
         state: application.getState()
       });
     }
@@ -72,14 +73,14 @@
         return;
       }
 
-      if (hasProperty(message, "kind") && message.kind === "sync-request") {
+      if (hasProperty(message, "kind") && message.kind === protocol.kinds.syncRequest) {
         sendCurrentState();
         return;
       }
 
       if (
         hasProperty(message, "kind") &&
-        message.kind === "action" &&
+        message.kind === protocol.kinds.action &&
         hasProperty(message, "action") &&
         isValidAction(message.action)
       ) {
